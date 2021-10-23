@@ -3,6 +3,8 @@ from typing import Iterable
 
 _UNSET = object()
 
+IDENTIFYING_PARAM_NAME = 'ID'
+
 
 class RequirementMetaclass(ABCMeta):
     def __new__(mcs, name: str, bases: Iterable, dct: dict):
@@ -35,14 +37,25 @@ def __init__(self, {', '.join(p['arg_string'] for p in params)}):
                      """,
                      f"auto-generated-{name}-__init__.py", "exec"), eval_context)
         cls.__init__ = eval_context['__init__']
+        cls.__hash__ = eval_context['__hash__']
         return cls
 
 
 class BaseRequirement(metaclass=RequirementMetaclass):
     _IS_BASE = True
-    _REQUIRED_CLASS_PARAMS = ('ID', 'DEPENDENCIES')
+    _REQUIRED_CLASS_PARAMS = (IDENTIFYING_PARAM_NAME, 'DEPENDENCIES')
     DEPENDENCIES_NAME = "dependencies"
     DEPENDENCIES_DEFAULT = ()
+    
+    def __hash__(self):
+        return hash(getattr(self, getattr(self, f"{IDENTIFYING_PARAM_NAME}_NAME"))})
+    
+    def __repr__(self):
+        return f"""<{self.__class__.__name__}| {', '.join(
+            f"{getattr(self, f'{p}_NAME')}:{getattr(self, getattr(self, f'{p}_NAME'))}"
+            for p in self._REQUIRED_CLASS_PARAMS
+            )}>"""
+        
 
 
 BaseRequirement.DEPENDENCIES_TYPE = Iterable[BaseRequirement]

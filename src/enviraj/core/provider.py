@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
-from typing import Iterable
+from typing import Iterable, Type
+from enum import Flag, auto
 from .requirement import BaseRequirement
 
 
@@ -19,9 +20,14 @@ class ProviderMetaclass(ABCMeta):
         return cls
 
 
+class State(Flag):
+    SHOULD_UNINSTALL = auto()
+    SHOULD_INSTALL = auto()
+
+
 class BaseProvider(metaclass=ProviderMetaclass):
     _IS_BASE = True
-    PROVIDES: Iterable[BaseRequirement] = ()
+    PROVIDES: Iterable[Type[BaseRequirement]] = ()
 
     @abstractmethod
     def install(self, requirement: BaseRequirement):
@@ -32,5 +38,5 @@ class BaseProvider(metaclass=ProviderMetaclass):
         pass
 
     @abstractmethod
-    def exists(self, requirement: BaseRequirement):
+    def get_state(self, requirement: BaseRequirement) -> Optional[State]:
         pass
